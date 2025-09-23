@@ -33,8 +33,8 @@ export class ApiService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to place order');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || `Failed to place order (HTTP ${response.status})`);
     }
 
     const data = await response.json();
@@ -48,8 +48,8 @@ export class ApiService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to cancel order');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || `Failed to cancel order (HTTP ${response.status})`);
     }
 
     const data = await response.json();
@@ -60,7 +60,8 @@ export class ApiService {
   async getAllPools(): Promise<string[]> {
     const response = await fetch(`${this.baseUrl}/pools`);
     if (!response.ok) {
-      throw new Error('Failed to fetch pools');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || `Failed to fetch pools (HTTP ${response.status})`);
     }
     const data = await response.json();
     return data.pools;
@@ -70,7 +71,8 @@ export class ApiService {
   async getPoolInfo(poolAddress: string): Promise<any> {
     const response = await fetch(`${this.baseUrl}/pools/${poolAddress}`);
     if (!response.ok) {
-      throw new Error('Failed to fetch pool info');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || `Failed to fetch pool info (HTTP ${response.status})`);
     }
     const data = await response.json();
     return data.poolInfo;

@@ -22,11 +22,14 @@ export const useWalletContext = () => {
 };
 
 export const WalletContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-  const network = WalletAdapterNetwork.Mainnet;
+  // Switch to mainnet
+  const network: WalletAdapterNetwork = WalletAdapterNetwork.Mainnet;
 
-  // You can also provide a custom RPC endpoint.
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const endpoint = useMemo(() => {
+    const custom = process.env.NEXT_PUBLIC_SOLANA_RPC;
+    // Prefer user-provided; otherwise fallback to public mainnet RPC
+    return (custom && custom.length > 0) ? custom : 'https://api.mainnet-beta.solana.com';
+  }, [network]);
 
   const wallets = useMemo(
     () => [

@@ -1,23 +1,39 @@
-import { 
-  LiquidityBookServices, 
-  MODE, 
-  getPriceFromId, 
-  getIdFromPrice 
-} from '@saros-finance/dlmm-sdk';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Connection, clusterApiUrl } from '@solana/web3.js'
 import { PoolInfo, TokenInfo } from '@/types/order';
 
 export class DLMMService {
-  private service: LiquidityBookServices;
+  private service: any;
+  private connection: Connection;
+  private rpcEndpoint: string;
+  private initialized: boolean = false;
   
   constructor() {
+    this.rpcEndpoint = process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl('mainnet-beta')
+    this.connection = new Connection(this.rpcEndpoint)
+    console.log('DLMMService constructor - RPC:', this.rpcEndpoint)
+  }
+  
+  private async initialize() {
+    if (this.initialized) return;
+    
+    console.log('Initializing DLMM service...')
+    const { LiquidityBookServices, MODE } = await import('@saros-finance/dlmm-sdk')
+    
+    const mode = MODE.MAINNET
+    console.log('DLMMService initialize - Mode:', mode)
+
     this.service = new LiquidityBookServices({
-      mode: MODE.MAINNET,
-    });
+      mode,
+      connectionConfig: { endpoint: this.rpcEndpoint },
+    })
+    
+    this.initialized = true
+    console.log('DLMMService initialized')
   }
   
   // Get pool information
   async getPoolInfo(poolAddress: string): Promise<PoolInfo> {
+    await this.initialize()
     const pairInfo = await this.service.getPairAccount(new PublicKey(poolAddress));
     
     return {
@@ -32,23 +48,37 @@ export class DLMMService {
   }
   
   // Get current price from active bin
+  async getMintDecimals(mintAddress: string): Promise<number> {
+    const info = await this.connection.getParsedAccountInfo(new PublicKey(mintAddress))
+    const parsed: any = info.value?.data
+    // When parsed is of type ParsedAccountData
+    const decimals = parsed?.parsed?.info?.decimals
+    if (typeof decimals === 'number') return decimals
+    // Fallback to 9 if unable to parse
+    return 9
+  }
+
   async getCurrentPrice(poolAddress: string): Promise<number> {
-    const poolInfo = await this.getPoolInfo(poolAddress);
-    return getPriceFromId(
-      poolInfo.binStep,
-      poolInfo.activeId,
-      9, // Default decimals
-      9  // Default decimals
-    );
+    await this.initialize()
+    const { getPriceFromId } = await import('@saros-finance/dlmm-sdk')
+    
+    const poolInfo = await this.getPoolInfo(poolAddress)
+    const [decX, decY] = await Promise.all([
+      this.getMintDecimals(poolInfo.tokenMintX),
+      this.getMintDecimals(poolInfo.tokenMintY),
+    ])
+    return getPriceFromId(poolInfo.binStep, poolInfo.activeId, decX, decY)
   }
   
   // Calculate bin ID from price
-  calculateBinIdFromPrice(price: number, binStep: number, decimals: number = 9): number {
+  async calculateBinIdFromPrice(price: number, binStep: number, decimals: number = 9): Promise<number> {
+    const { getIdFromPrice } = await import('@saros-finance/dlmm-sdk')
     return getIdFromPrice(price, binStep, decimals, decimals);
   }
   
   // Calculate price from bin ID
-  calculatePriceFromBinId(binId: number, binStep: number, decimals: number = 9): number {
+  async calculatePriceFromBinId(binId: number, binStep: number, decimals: number = 9): Promise<number> {
+    const { getPriceFromId } = await import('@saros-finance/dlmm-sdk')
     return getPriceFromId(binStep, binId, decimals, decimals);
   }
   
@@ -64,6 +94,7 @@ export class DLMMService {
     tokenOutDecimals: number;
     slippage: number;
   }) {
+    await this.initialize()
     return await this.service.getQuote({
       amount: params.amountIn,
       isExactInput: params.isExactInput,
@@ -88,6 +119,7 @@ export class DLMMService {
     isExactInput: boolean;
     userWallet: string;
   }) {
+    await this.initialize()
     return await this.service.swap({
       tokenMintX: new PublicKey(params.tokenIn),
       tokenMintY: new PublicKey(params.tokenOut),
@@ -103,16 +135,30 @@ export class DLMMService {
   
   // Get all available pools
   async getAllPools(): Promise<string[]> {
-    return await this.service.fetchPoolAddresses();
+    console.log('DLMMService.getAllPools() called')
+    try {
+      await this.initialize()
+      console.log('Service initialized, calling fetchPoolAddresses...')
+      const addresses = await this.service.fetchPoolAddresses()
+      console.log('fetchPoolAddresses returned:', typeof addresses, Array.isArray(addresses))
+      console.log('Number of addresses:', addresses?.length || 0)
+      console.log('First few addresses:', addresses?.slice(0, 3))
+      return addresses
+    } catch (error) {
+      console.error('Error in getAllPools:', error)
+      throw error
+    }
   }
   
   // Get pool metadata
   async getPoolMetadata(poolAddress: string) {
+    await this.initialize()
     return await this.service.fetchPoolMetadata(poolAddress);
   }
   
   // Get user positions
   async getUserPositions(userWallet: string, poolAddress?: string) {
+    await this.initialize()
     if (poolAddress) {
       return await this.service.getUserPositions({
         payer: new PublicKey(userWallet),

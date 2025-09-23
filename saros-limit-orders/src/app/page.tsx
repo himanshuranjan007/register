@@ -1,155 +1,119 @@
-'use client';
+"use client"
 
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useState, useEffect } from 'react';
-import { OrderForm } from '@/components/OrderForm';
-import { OrderBook } from '@/components/OrderBook';
-import { PoolSelector } from '@/components/PoolSelector';
-import { ApiService } from '@/services/api';
-import { LimitOrder } from '@/types/order';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { WalletConnection } from "@/components/wallet-connection"
+import { PoolSelector } from "@/components/pool-selector"
+import { OrderForm } from "@/components/order-form"
+import { OrdersTable } from "@/components/orders-table"
+import { PoolInfo } from "@/components/pool-info"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { PoolProvider } from "@/contexts/PoolContext"
+import { Activity, TrendingUp, Clock } from "lucide-react"
+import { useWallet } from '@solana/wallet-adapter-react'
+import { ApiService } from '@/services/api'
+import { LimitOrder } from '@/types/order'
+import toast from 'react-hot-toast'
 
-export default function Home() {
-  const { connected, publicKey } = useWallet();
-  const [selectedPool, setSelectedPool] = useState<string>('');
-  const [userOrders, setUserOrders] = useState<LimitOrder[]>([]);
-  const [pools, setPools] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  
-  const apiService = new ApiService();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export default function SarosLimitOrders() {
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (mounted && connected && publicKey) {
-      loadUserData();
-    }
-  }, [mounted, connected, publicKey]);
-
-  const loadUserData = async () => {
-    if (!publicKey) return;
-    
-    setLoading(true);
-    try {
-      // Load user orders
-      const orders = await apiService.getUserOrders(publicKey.toString());
-      setUserOrders(orders);
-      
-      // Load available pools
-      const availablePools = await apiService.getAllPools();
-      setPools(availablePools);
-      
-      if (availablePools.length > 0 && !selectedPool) {
-        setSelectedPool(availablePools[0]);
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-      toast.error('Failed to load user data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOrderPlaced = async (orderId: string) => {
-    toast.success(`Order placed successfully! Order ID: ${orderId}`);
-    await loadUserData(); // Refresh orders
-  };
-
-  const handleOrderCancelled = async (orderId: string) => {
-    toast.success('Order cancelled successfully');
-    await loadUserData(); // Refresh orders
-  };
+    setMounted(true)
+  }, [])
 
   if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!connected) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Saros Limit Orders
-          </h1>
-          <p className="text-gray-600 mb-8">
-            Connect your wallet to start placing limit orders on DLMM pools
-          </p>
-          <WalletMultiButton className="mx-auto" />
-        </div>
-      </div>
-    );
+    return null
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Saros Limit Orders
-              </h1>
+    <PoolProvider>
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary rounded-sm flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight">Saros Protocol</h1>
+                  <p className="text-xs text-muted-foreground font-mono">Limit Order Engine</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Badge variant="outline" className="font-mono text-xs">
+                  <div className="w-2 h-2 bg-success rounded-full mr-2 animate-pulse" />
+                  MAINNET
+                </Badge>
+                <ThemeToggle />
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <WalletMultiButton />
+          </div>
+        </header>
+
+        <main className="container mx-auto px-6 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 space-y-6">
+              <WalletConnection />
+              <PoolSelector />
+              <PoolInfo />
+            </div>
+
+          <div className="lg:col-span-1">
+            <OrderForm />
+          </div>
+
+          <div className="lg:col-span-1 space-y-6">
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Trading Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-lg font-bold font-mono">24</div>
+                    <div className="text-xs text-muted-foreground">Active Orders</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-lg font-bold font-mono">$12.4K</div>
+                    <div className="text-xs text-muted-foreground">Total Volume</div>
+                  </div>
+                </div>
+                <div className="text-center p-3 bg-success/10 rounded-lg border border-success/20">
+                  <div className="text-lg font-bold font-mono text-success">98.7%</div>
+                  <div className="text-xs text-muted-foreground">Fill Rate</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <OrdersTable />
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t border-border mt-16">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <span className="font-mono">Saros SDK v2.1.0</span>
+              <Separator orientation="vertical" className="h-4" />
+              <span>Powered by Solana</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              <span className="font-mono">Block: 245,891,234</span>
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Pool Selector */}
-            <div className="lg:col-span-1">
-              <PoolSelector
-                pools={pools}
-                selectedPool={selectedPool}
-                onPoolSelect={setSelectedPool}
-              />
-            </div>
-
-            {/* Order Form */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Place Limit Order
-                </h2>
-                {selectedPool ? (
-                  <OrderForm
-                    poolAddress={selectedPool}
-                    onOrderPlaced={handleOrderPlaced}
-                  />
-                ) : (
-                  <p className="text-gray-500">Please select a pool first</p>
-                )}
-              </div>
-            </div>
-
-            {/* Order Book */}
-            <div className="lg:col-span-1">
-              <OrderBook
-                orders={userOrders}
-                onOrderCancelled={handleOrderCancelled}
-              />
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
+      </footer>
+      </div>
+    </PoolProvider>
+  )
 }

@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { WalletContextProvider } from '@/contexts/WalletContext'
 import { Toaster } from 'react-hot-toast'
 
-const inter = Inter({ subsets: ['latin'] })
-
 export const metadata: Metadata = {
-  title: 'Saros Limit Orders',
+  title: 'Saros Protocol Limit Order Engine',
   description: 'Smart Limit Order System for DLMM',
 }
 
@@ -18,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <WalletContextProvider>
           {children}
           <Toaster position="top-right" />

@@ -63,13 +63,13 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
 
   if (orders.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <div className="border border-neutral-200 rounded-md p-6">
+        <h2 className="text-lg font-medium mb-4">
           Your Orders
         </h2>
         <div className="text-center py-8">
-          <p className="text-gray-500">No orders found</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="text-neutral-500">No orders found</p>
+          <p className="text-sm text-neutral-400 mt-2">
             Place your first limit order to get started
           </p>
         </div>
@@ -78,8 +78,8 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+    <div className="border border-neutral-200 rounded-md p-6">
+      <h2 className="text-lg font-medium mb-4">
         Your Orders ({orders.length})
       </h2>
       
@@ -87,7 +87,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
         {orders.map((order) => (
           <div
             key={order.id}
-            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="border border-neutral-200 rounded-md p-4 card-hover"
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center space-x-2">
@@ -95,7 +95,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
                   {order.status.toUpperCase()}
                 </span>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  order.orderType === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  order.orderType === 'buy' ? 'bg-neutral-100 text-neutral-900' : 'bg-neutral-100 text-neutral-900'
                 }`}>
                   {order.orderType.toUpperCase()}
                 </span>
@@ -105,7 +105,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
                 <button
                   onClick={() => handleCancelOrder(order.id)}
                   disabled={cancellingOrders.has(order.id)}
-                  className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                  className="text-black hover:text-neutral-700 text-sm font-medium disabled:opacity-50"
                 >
                   {cancellingOrders.has(order.id) ? 'Cancelling...' : 'Cancel'}
                 </button>
@@ -114,24 +114,24 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
             
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">Amount:</span>
+                <span className="text-neutral-500">Amount:</span>
                 <span className="ml-2 font-medium">{formatAmount(order.amountIn)}</span>
               </div>
               
               <div>
-                <span className="text-gray-500">Target Price:</span>
+                <span className="text-neutral-500">Target Price:</span>
                 <span className="ml-2 font-medium">{formatPrice(order.targetPrice)}</span>
               </div>
               
               <div>
-                <span className="text-gray-500">Pool:</span>
+                <span className="text-neutral-500">Pool:</span>
                 <span className="ml-2 font-medium text-xs">
                   {order.poolAddress.slice(0, 8)}...{order.poolAddress.slice(-8)}
                 </span>
               </div>
               
               <div>
-                <span className="text-gray-500">Created:</span>
+                <span className="text-neutral-500">Created:</span>
                 <span className="ml-2 font-medium">
                   {new Date(order.createdAt).toLocaleDateString()}
                 </span>
@@ -139,15 +139,15 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
             </div>
             
             {order.executionPrice && (
-              <div className="mt-2 pt-2 border-t border-gray-100">
+              <div className="mt-2 pt-2 border-t border-neutral-100">
                 <div className="text-sm">
-                  <span className="text-gray-500">Executed at:</span>
-                  <span className="ml-2 font-medium text-green-600">
+                  <span className="text-neutral-500">Executed at:</span>
+                  <span className="ml-2 font-medium">
                     {formatPrice(order.executionPrice)}
                   </span>
                 </div>
                 {order.transactionSignature && (
-                  <div className="text-xs text-gray-400 mt-1">
+                  <div className="text-xs text-neutral-400 mt-1">
                     TX: {order.transactionSignature.slice(0, 16)}...
                   </div>
                 )}
@@ -155,7 +155,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orders, onOrderCancelled }
             )}
             
             {order.expiresAt && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-neutral-500">
                 Expires: {new Date(order.expiresAt).toLocaleString()}
               </div>
             )}

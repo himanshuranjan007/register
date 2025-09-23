@@ -7,9 +7,14 @@ export async function GET(
   { params }: { params: { poolAddress: string } }
 ) {
   try {
+    const poolAddress = params.poolAddress;
+    if (!poolAddress || poolAddress.length < 32) {
+      return NextResponse.json({ error: 'Invalid pool address' }, { status: 400 });
+    }
+
     const dlmmService = new DLMMService();
-    const poolInfo = await dlmmService.getPoolInfo(params.poolAddress);
-    const currentPrice = await dlmmService.getCurrentPrice(params.poolAddress);
+    const poolInfo = await dlmmService.getPoolInfo(poolAddress);
+    const currentPrice = await dlmmService.getCurrentPrice(poolAddress);
     
     return NextResponse.json({ 
       poolInfo: {
@@ -18,8 +23,9 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error('Error fetching pool info:', error);
-    return NextResponse.json({ error: 'Failed to fetch pool info' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to fetch pool info';
+    console.error('Error fetching pool info:', message);
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
 
